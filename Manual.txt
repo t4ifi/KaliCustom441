@@ -1,19 +1,21 @@
 Manual Steps
 
-1) Wallpaper settings (optional) go to desktop, folder: other +other location, right click show hidden files, computer/home/user/.local/share/wallpapers, select open folder
-2) Open LightDM settings, select theme:Everblush, icons:Nordy-Cyan-dark-mod, add new custom color:#232a2d (optional you can custom your own icon)
-3) Disable lock startup in startup and session, application autostart disable Screen locker
-4) Go to session and startup, add Autostart Application, + name:Picom startup, description:picom setup, command:picom, Triger:on login
-5)Optional add findex to staartup applications, same step as picom 
-6) Open KaliSetupBeta folder in termina and execute chmod +x docklike.sh and execute  ./docklike.sh
-   After install right click on task bar, open panel, preference panel, go to item tab, click on + to add new item, docklike taskbar, move it under       workspace switcher,      click on settings, mark show preview thumbnail and appearience none none automatic, force icon size 24, show number of windows opened
-7) Type in terminal "sudo nano /home/kali/.config/xfce4/panel/genmon-15.rc replace path with /home/your_username/genmon-scripts/cpu.sh
-8) Type in terminal "sudo nano /home/kali/.config/xfce4/panel/genmon-16.rc replace path with /home/your_username/genmon-scripts/datetime.sh
-9) Type in terminal "sudo nano /home/kali/.config/xfce4/panel/genmon-17.rc replace path with /home/your_username/genmon-scripts/mem.sh 
-10) Type in terminal "sudo nano /home/kali/.config/xfce4/panel/whiskermenu-8.rc replace button icon with /home/your_username/.assets/icons/shield.svg
-11) Type kill -9 -1
+NOTA: Reemplaza $HOME con tu directorio home (ejemplo: /home/tu_usuario)
 
-#To enable the eww plugin type the command shift + s or eww open --toggle sidebar
+1) Wallpaper settings (optional) go to desktop, folder: other + other location, right click show hidden files, computer/home/user/.local/share/wallpapers, select open folder
+2) Open LightDM settings, select theme:Everblush, icons:Nordzy-cyan-dark-MOD, add new custom color:#232a2d (optional you can custom your own icon)
+3) Disable lock startup in startup and session, application autostart disable Screen locker
+4) Go to session and startup, add Autostart Application, + name:Picom startup, description:picom setup, command:picom, Trigger:on login
+5) Optional add findex to startup applications, same step as picom 
+6) Open KaliSetupBeta folder in terminal and execute chmod +x docklike.sh and execute ./docklike.sh
+   After install right click on task bar, open panel, preference panel, go to item tab, click on + to add new item, docklike taskbar, move it under workspace switcher, click on settings, mark show preview thumbnail and appearance none none automatic, force icon size 24, show number of windows opened
+7) Type in terminal "nano $HOME/.config/xfce4/panel/genmon-15.rc" and replace path with $HOME/genmon-scripts/cpu.sh
+8) Type in terminal "nano $HOME/.config/xfce4/panel/genmon-16.rc" and replace path with $HOME/genmon-scripts/datetime.sh
+9) Type in terminal "nano $HOME/.config/xfce4/panel/genmon-17.rc" and replace path with $HOME/genmon-scripts/mem.sh 
+10) Type in terminal "nano $HOME/.config/xfce4/panel/whiskermenu-8.rc" and replace button icon with $HOME/.assets/icons/shield.svg
+11) To apply all changes, type: kill -9 -1 (or restart your system)
+
+# To enable the eww sidebar plugin, type the command: Shift + S or run: eww open --toggle sidebar
 
 
 

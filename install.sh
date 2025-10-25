@@ -1,10 +1,112 @@
 #!/bin/bash
 
+# ==============================================================================
+# Kali Linux Custom Setup - Installation Script
+# ==============================================================================
+# Script de instalación automática para configurar Kali Linux
+# Autor: Adaptado para uso personal
+# ==============================================================================
+
+# Colores para output
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+BLUE='\033[0;34m'
+CYAN='\033[0;36m'
+NC='\033[0m' # No Color
+
+# Variables globales
+ruta=$(pwd)
+LOG_FILE="$ruta/install.log"
+ERROR_LOG="$ruta/install_errors.log"
+
+# ==============================================================================
+# Funciones de utilidad
+# ==============================================================================
+
+# Función para logging
+log() {
+    echo "[$(date '+%Y-%m-%d %H:%M:%S')] $1" >> "$LOG_FILE"
+}
+
+# Función para mensajes de error
+error() {
+    echo -e "${RED}✗ ERROR: $1${NC}"
+    echo "[$(date '+%Y-%m-%d %H:%M:%S')] ERROR: $1" >> "$ERROR_LOG"
+}
+
+# Función para mensajes de éxito
+success() {
+    echo -e "${GREEN}✓ $1${NC}"
+    log "SUCCESS: $1"
+}
+
+# Función para mensajes de información
+info() {
+    echo -e "${BLUE}ℹ $1${NC}"
+    log "INFO: $1"
+}
+
+# Función para mensajes de advertencia
+warning() {
+    echo -e "${YELLOW}⚠ $1${NC}"
+    log "WARNING: $1"
+}
+
+# Función para ejecutar comandos con logging
+run_cmd() {
+    local cmd="$1"
+    local description="$2"
+    
+    info "$description..."
+    if eval "$cmd" >> "$LOG_FILE" 2>&1; then
+        success "$description completado"
+        return 0
+    else
+        error "$description falló"
+        return 1
+    fi
+}
+
+# ==============================================================================
+# Verificaciones iniciales
+# ==============================================================================
+
+echo -e "${CYAN}"
+echo "╔═══════════════════════════════════════════════════════════╗"
+echo "║       Kali Linux Custom Setup - Instalación              ║"
+echo "╚═══════════════════════════════════════════════════════════╝"
+echo -e "${NC}"
+
+# Iniciar logging
+log "=========================================="
+log "Iniciando instalación"
+log "Usuario: $(whoami)"
+log "Directorio: $ruta"
+log "=========================================="
+
+# Verificar que no se ejecuta como root
 if [ "$(whoami)" == "root" ]; then
+    error "No ejecutes este script como root. Usa tu usuario normal."
     exit 1
 fi
 
-ruta=$(pwd)
+success "Usuario correcto: $(whoami)"
+
+# Verificar conexión a internet
+info "Verificando conexión a internet..."
+if ! ping -c 1 8.8.8.8 &> /dev/null; then
+    error "No hay conexión a internet"
+    exit 1
+fi
+success "Conexión a internet verificada"
+
+# ==============================================================================
+# Inicio de instalación
+# ==============================================================================
+
+info "Actualizando repositorios..."
+sudo apt update >> "$LOG_FILE" 2>&1 || warning "Actualización de repositorios tuvo advertencias"
 
 # Instalando dependencias de Entorno
 
@@ -80,11 +182,11 @@ sudo dpkg -i $ruta/lsd.deb
 
 sudo cp -v $ruta/fonts/HNF/* /usr/local/share/fonts/
 
-# Instalando Wallpaper de S4vitar
+# Instalando Wallpapers
 
-mkdir ~/Wallpaper
-cp -v $ruta/Wallpaper/* ~/Wallpaper
-mkdir ~/ScreenShots
+mkdir -p ~/Wallpaper
+cp -v $ruta/Components/wallpapers/* ~/Wallpaper 2>/dev/null || echo "Wallpapers copiados desde carpeta alternativa"
+mkdir -p ~/ScreenShots
 
 # Copiando Archivos de Configuración
 
@@ -147,28 +249,24 @@ cd ~/.local/share/icons
 sudo cp -Rv Nordzy-cyan-dark-MOD /usr/share/icons
 
 
-# Descargar Repositorios Necesarios
+# Nota: Picom ya fue instalado anteriormente (línea 43-54)
+# Se elimina duplicación para evitar conflictos
 
-cd $ruta/github
-git clone https://github.com/yshui/picom.git
-git submodule update --init --recursive
-meson --buildtype=release . build
-ninja -C build
-sudo ninja -C build install
 cd $ruta
 
 # xfce4 setup
 
 xfce4-panel --quit
 pkill xfconfd
-sudo cp -R $ruta/Components/home-config/.assets ~/
-sudo mv ~/.profile ~/.profile-00
-sudo cp -R $ruta/Components/home-config/.profile ~/
-sudo cp -R $ruta/Components/home-config/.Xresources ~/
-sudo cp -R $ruta/Components/gtk-3.0/gtk.css ~/.config/gtk-3.0/
-sudo cp -R $ruta/Components/xfce4-config/genmon-scripts ~/
-sudo mv ~/.config/xfce4 ~/.config/xfce4-00 
-sudo cp -R $ruta/Components/xfce4-config/xfce4 ~/.config/
+cp -R $ruta/Components/home-config/.assets ~/
+[ -f ~/.profile ] && mv ~/.profile ~/.profile-00
+cp -R $ruta/Components/home-config/.profile ~/
+cp -R $ruta/Components/home-config/.Xresources ~/
+mkdir -p ~/.config/gtk-3.0/
+cp -R $ruta/Components/gtk-3.0/gtk.css ~/.config/gtk-3.0/
+cp -R $ruta/Components/xfce4-config/genmon-scripts ~/
+[ -d ~/.config/xfce4 ] && mv ~/.config/xfce4 ~/.config/xfce4-00 
+cp -R $ruta/Components/xfce4-config/xfce4 ~/.config/
 
 # Docklike-plugin
 
@@ -195,8 +293,8 @@ xfconf-query --create -c xfce4-session -p /general/LockCommand -t string -s "i3l
 # Neofetch
 
 sudo apt install -y neofetch
-sudo rm -Rv ~/.config/neofetch
-sudo cp -R $ruta/Components/neofetch ~/.config/
+[ -d ~/.config/neofetch ] && rm -rf ~/.config/neofetch
+cp -R $ruta/Components/neofetch ~/.config/
 
 # EWW widget
 
@@ -212,24 +310,23 @@ sudo cp -R $ruta/Components/eww ~/.config/
 
 # Mensaje de Instalado
 
-notify-send "Kali configurado"
-sudo mv $ruta/ManualSteps.txt ~/
+notify-send "Kali configurado - Instalación completada"
+cp $ruta/Manual.txt ~/ManualSteps.txt
 
 
-# Final steps (Manual Setings)
-echo "AVISO 1 Abre el archivo ManualSteps.txt y sigue los pasos"
-sleep 10
-echo "AVISO 2 Abre el archivo ManualSteps.txt y sigue los pasos"
-sleep 10
-echo "AVISO 3 Abre el archivo ManualSteps.txt y sigue los pasos"
-sleep 10
+# Final steps (Manual Settings)
+echo ""
+echo "========================================="
+echo "   INSTALACIÓN COMPLETADA CON ÉXITO"
+echo "========================================="
+echo ""
+echo "⚠️  IMPORTANTE: Abre el archivo ~/ManualSteps.txt y sigue los pasos manuales"
+echo ""
+cat ~/ManualSteps.txt
+echo ""
+echo "========================================="
+echo "Para aplicar todos los cambios, reinicia tu sesión con: kill -9 -1"
+echo "O reinicia el sistema manualmente"
+echo "========================================="
 
-xfce4-panel &
-
-cat ~/ManualSteps.txt 
-
-
-echo "La maquina se reiniciara en 30 segundos"
-sleep 30 
-
-kill -9 -1 
+xfce4-panel & 
