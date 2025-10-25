@@ -7,9 +7,6 @@
 # Autor: Adaptado para uso personal
 # ==============================================================================
 
-# Activar modo estricto de bash
-set -euo pipefail  # Sale en caso de error, variables no definidas, o fallo en pipe
-
 # Colores para output
 RED='\033[0;31m'
 GREEN='\033[0;32m'
@@ -25,6 +22,13 @@ LOG_FILE="$ruta/install.log"
 ERROR_LOG="$ruta/install_errors.log"
 STEP_COUNTER=0
 TOTAL_STEPS=20
+
+# Inicializar archivos de log
+touch "$LOG_FILE" "$ERROR_LOG"
+
+# NO usar modo estricto para evitar salidas inesperadas
+# En su lugar, verificaremos manualmente los errores críticos
+# set -euo pipefail
 
 # ==============================================================================
 # Funciones de utilidad
@@ -140,6 +144,7 @@ run_cmd() {
     info "$description..."
     log "Ejecutando: $cmd"
     
+    # Ejecutar comando y capturar código de salida
     if eval "$cmd" >> "$LOG_FILE" 2>&1; then
         success "$description completado"
         return 0
@@ -153,7 +158,23 @@ run_cmd() {
             error "$description falló (código: $exit_code)"
             echo -e "${YELLOW}Comando que falló: $cmd${NC}"
             echo -e "${YELLOW}Ver detalles en: $LOG_FILE${NC}"
-            return $exit_code
+            echo ""
+            
+            # Preguntar qué hacer
+            echo -e "${YELLOW}¿Qué deseas hacer?${NC}"
+            echo -e "  ${GREEN}1${NC}) Continuar (no recomendado)"
+            echo -e "  ${RED}2${NC}) Salir y revisar el error (recomendado)"
+            echo ""
+            read -p "Selecciona una opción (1/2): " -n 1 -r
+            echo ""
+            
+            if [[ ! $REPLY =~ ^[1]$ ]]; then
+                echo -e "${RED}Instalación abortada por el usuario${NC}"
+                exit $exit_code
+            else
+                echo -e "${YELLOW}⚠ Continuando bajo tu responsabilidad...${NC}"
+                return 0
+            fi
         fi
     fi
 }
@@ -180,19 +201,20 @@ check_disk_space() {
     return 0
 }
 
-# Capturar errores y mostrar información útil
-trap 'handle_error ${LINENO} "$BASH_COMMAND"' ERR
+# NO usar trap ERR sin modo estricto, manejamos errores manualmente en run_cmd()
+# trap 'handle_error ${LINENO} "$BASH_COMMAND"' ERR
 
 # Cleanup al salir
 cleanup() {
-    echo -e "\n${BLUE}Limpiando archivos temporales...${NC}"
-    log "Limpieza al finalizar script"
-}
-
-# Cleanup al salir
-cleanup() {
-    echo -e "\n${BLUE}Limpiando archivos temporales...${NC}"
-    log "Limpieza al finalizar script"
+    local exit_code=$?
+    if [ $exit_code -eq 0 ]; then
+        echo -e "\n${GREEN}╔════════════════════════════════════════════════════════════╗${NC}"
+        echo -e "${GREEN}║         ✓ INSTALACIÓN COMPLETADA CON ÉXITO ✓             ║${NC}"
+        echo -e "${GREEN}╚════════════════════════════════════════════════════════════╝${NC}"
+    else
+        echo -e "\n${RED}Instalación terminada con errores (código: $exit_code)${NC}"
+    fi
+    log "Script finalizado con código: $exit_code"
 }
 
 trap cleanup EXIT
