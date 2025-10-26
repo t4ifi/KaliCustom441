@@ -370,23 +370,47 @@ step "Instalación de cursores"
 # Importando cursores
 step "Instalación de cursores"
 
-info "Clonando repositorio de cursores Radioactive-nord..."
-if [ ! -d "Radioactive-nord" ]; then
-    run_cmd "git clone https://github.com/alvatip/Radioactive-nord.git" "Clonación de Radioactive-nord" || {
-        warning "No se pudo clonar repositorio de cursores, continuando..."
-    }
-else
-    info "Radioactive-nord ya existe, omitiendo clonación"
+info "Preparando instalación de cursores Radioactive-nord..."
+
+# Si el directorio existe pero está corrupto, eliminarlo
+if [ -d "Radioactive-nord" ] && [ ! -f "Radioactive-nord/install.sh" ]; then
+    warning "Directorio Radioactive-nord existe pero está incompleto, eliminando..."
+    rm -rf Radioactive-nord
 fi
 
-if [ -d "Radioactive-nord" ]; then
-    cd Radioactive-nord || { error "No se pudo acceder al directorio Radioactive-nord"; exit 1; }
-    chmod +x install.sh || { error "No se pudo dar permisos a install.sh"; exit 1; }
-    ./install.sh || warning "Instalación de cursores falló, continuando..."
-    success "Cursores instalados"
+# Clonar si no existe
+if [ ! -d "Radioactive-nord" ]; then
+    info "Clonando repositorio de cursores..."
+    if git clone https://github.com/alvatip/Radioactive-nord.git >> "$LOG_FILE" 2>&1; then
+        success "Repositorio Radioactive-nord clonado"
+    else
+        warning "No se pudo clonar repositorio de cursores, continuando sin cursores personalizados"
+    fi
+else
+    info "Radioactive-nord ya existe, verificando integridad..."
+fi
+
+# Instalar cursores si el directorio y el script existen
+if [ -d "Radioactive-nord" ] && [ -f "Radioactive-nord/install.sh" ]; then
+    info "Instalando cursores Radioactive-nord..."
+    cd Radioactive-nord || { warning "No se pudo acceder al directorio, omitiendo cursores"; }
+    
+    if [ -f "install.sh" ]; then
+        chmod +x install.sh
+        if ./install.sh >> "$LOG_FILE" 2>&1; then
+            success "Cursores Radioactive-nord instalados correctamente"
+        else
+            warning "Instalación de cursores falló (no crítico, continuando)"
+        fi
+    fi
+    
     cd "$ruta" || { error "No se pudo regresar al directorio $ruta"; exit 1; }
 else
-    warning "No se instalaron los cursores Radioactive-nord"
+    warning "No se instalaron los cursores personalizados"
+    info "Puedes instalarlos manualmente después con:"
+    echo -e "  ${CYAN}cd ~/KaliCustom441${NC}"
+    echo -e "  ${CYAN}git clone https://github.com/alvatip/Radioactive-nord.git${NC}"
+    echo -e "  ${CYAN}cd Radioactive-nord && ./install.sh${NC}"
 fi
 
 # Instalamos paquetes adicionales
