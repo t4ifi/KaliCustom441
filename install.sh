@@ -694,4 +694,31 @@ echo "Para aplicar todos los cambios, reinicia tu sesión con: kill -9 -1"
 echo "O reinicia el sistema manualmente"
 echo "========================================="
 
-xfce4-panel & 
+xfce4-panel &
+
+# Comprobación de dependencias
+step "Verificando dependencias necesarias"
+if ! dpkg -l | grep -q "dbusmenu-glib"; then
+    warning "La biblioteca 'dbusmenu-glib' no está instalada. Intentando instalar..."
+    sudo apt-get install -y libdbusmenu-glib-dev || error "No se pudo instalar 'dbusmenu-glib'. Por favor, instálala manualmente."
+else
+    success "Dependencia 'dbusmenu-glib' verificada."
+fi
+
+# Manejo de componentes opcionales
+step "Instalando complemento opcional 'docklike'"
+if [ -f "$ruta/docklike.sh" ]; then
+    chmod +x "$ruta/docklike.sh"
+    ./docklike.sh || warning "El complemento 'docklike' no se instaló correctamente."
+else
+    warning "El archivo 'docklike.sh' no se encontró. Saltando instalación de 'docklike'."
+fi
+
+# Automatización de pasos manuales
+step "Automatizando configuraciones post-instalación"
+if [ -f "$HOME/ManualSteps.txt" ]; then
+    sed -i "s|$HOME|/home/tu_usuario|g" "$HOME/ManualSteps.txt"
+    success "Archivo 'ManualSteps.txt' actualizado con rutas correctas."
+else
+    warning "El archivo 'ManualSteps.txt' no se encontró. Por favor, realiza los pasos manualmente."
+fi
